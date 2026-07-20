@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="null" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="3a2ad2a7-8431-429f-8c08-816967a869fa">
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<queryString language="SQL">
+		<![CDATA[SELECT `sales`.`sales_id`,
+    `sales`.`product_id`,
+    `sales`.`cashier_id`,
+    `sales`.`sales_product_price`,
+    `sales`.`sales_quantity_sold`,
+    `sales`.`sales_total_price`,
+    `sales`.`sales_date_of_purchase`,
+    `sales`.`sales_profit`
+FROM `pcvillage`.`sales`;]]>
+	</queryString>
+	<field name="sales_id" class="java.lang.Long">
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="product_id" class="java.lang.Long">
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="cashier_id" class="java.lang.Long">
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="sales_product_price" class="java.lang.Long">
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="sales_quantity_sold" class="java.lang.Long">
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="sales_total_price" class="java.lang.Long">
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="sales_date_of_purchase" class="java.lang.String">
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="sales_profit" class="java.lang.Long">
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<variable name="sales_profit_1" class="java.lang.Long" resetType="Column" calculation="Sum">
+		<variableExpression><![CDATA[$F{sales_profit}]]></variableExpression>
+	</variable>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="28" splitType="Stretch">
+			<staticText>
+				<reportElement x="228" y="0" width="100" height="20" uuid="2301255a-4e87-4be8-9f66-a081f6e85743"/>
+				<textElement>
+					<font size="14" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Sales Report]]></text>
+			</staticText>
+		</band>
+	</title>
+	<pageHeader>
+		<band splitType="Stretch"/>
+	</pageHeader>
+	<columnHeader>
+		<band height="61" splitType="Stretch">
+			<staticText>
+				<reportElement x="0" y="0" width="43" height="20" uuid="fbec791a-0e67-41a7-98c6-8af0eeec1a5d"/>
+				<text><![CDATA[Sales ID]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="52" y="0" width="57" height="20" uuid="f6bb3817-7fb7-4038-8e48-70d9439b0cfa"/>
+				<text><![CDATA[Product ID]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="119" y="0" width="52" height="20" uuid="3a4a1c56-0042-4526-ba1b-04a0aa23e236"/>
+				<text><![CDATA[Cashier ID]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="195" y="0" width="71" height="20" uuid="3eb232bd-b881-47dc-9197-2e74f98313e7"/>
+				<text><![CDATA[Product Price]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="283" y="0" width="71" height="20" uuid="ed1c52b4-c623-4631-89bb-a38be60a6a2a"/>
+				<text><![CDATA[Quantity Sold]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="374" y="0" width="58" height="20" uuid="80755779-9583-4453-95fe-d7bc95f5d674"/>
+				<text><![CDATA[Total Price]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="464" y="0" width="85" height="20" uuid="67ce7ea0-9291-43cc-927c-5c20d734fae6"/>
+				<text><![CDATA[Date of Purchase]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="23" splitType="Stretch">
+			<textField>
+				<reportElement x="0" y="0" width="23" height="20" uuid="846cb498-ee19-4b6b-b971-3117de63c507"/>
+				<textFieldExpression><![CDATA[$F{sales_id}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="52" y="0" width="23" height="20" uuid="2ab3a8d1-6af9-4667-a381-201dacbb90d7"/>
+				<textFieldExpression><![CDATA[$F{product_id}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="119" y="0" width="18" height="20" uuid="f988799d-d420-443e-a47b-76692feeed36"/>
+				<textFieldExpression><![CDATA[$F{cashier_id}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="195" y="0" width="71" height="20" uuid="0799b797-b57b-4ce4-b3c0-67fbf75b5a9b"/>
+				<textFieldExpression><![CDATA[$F{sales_product_price}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="283" y="0" width="71" height="20" uuid="603f0dfc-582b-4cee-b6c2-6bed320fab73"/>
+				<textFieldExpression><![CDATA[$F{sales_quantity_sold}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="374" y="0" width="74" height="20" uuid="69881fa1-408b-42ef-aa3e-87a0dff43952"/>
+				<textFieldExpression><![CDATA[$F{sales_total_price}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="464" y="0" width="66" height="20" uuid="37acf879-7acb-45cc-b4dc-e18683db70e8"/>
+				<textFieldExpression><![CDATA[$F{sales_date_of_purchase}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<columnFooter>
+		<band height="45" splitType="Stretch">
+			<staticText>
+				<reportElement x="0" y="14" width="80" height="20" uuid="9b86a20d-ed2d-415e-8c11-15a0bf3c1c37"/>
+				<textElement>
+					<font size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[NET PROFIT:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="80" y="14" width="100" height="20" uuid="881deeae-985d-4fe7-9645-cc4382eae4e8"/>
+				<textElement>
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{sales_profit_1}]]></textFieldExpression>
+			</textField>
+		</band>
+	</columnFooter>
+	<pageFooter>
+		<band splitType="Stretch"/>
+	</pageFooter>
+	<summary>
+		<band splitType="Stretch"/>
+	</summary>
+</jasperReport>

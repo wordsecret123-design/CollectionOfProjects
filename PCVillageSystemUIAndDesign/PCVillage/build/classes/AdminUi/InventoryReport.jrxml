@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="null" pageWidth="842" pageHeight="595" orientation="Landscape" columnWidth="802" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="5eb99700-81fd-4870-8fab-26efff783b46">
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<queryString language="SQL">
+		<![CDATA[SELECT `inventory`.`product_id`,
+    `inventory`.`product_type`,
+    `inventory`.`product_brand`,
+    `inventory`.`product_model`,
+    `inventory`.`product_purchase_price`,
+    `inventory`.`product_selling_price`,
+    `inventory`.`product_quantity`,
+    `inventory`.`product_last_changed_date`
+FROM `pcvillage`.`inventory`;]]>
+	</queryString>
+	<field name="product_id" class="java.lang.Long">
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="product_type" class="java.lang.String">
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="product_brand" class="java.lang.String">
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="product_model" class="java.lang.String">
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="product_purchase_price" class="java.lang.Long">
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="product_selling_price" class="java.lang.Long">
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="product_quantity" class="java.lang.Long">
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="product_last_changed_date" class="java.lang.String">
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="33" splitType="Stretch">
+			<staticText>
+				<reportElement x="341" y="0" width="128" height="20" uuid="05cdbae5-7f0b-4359-aba0-077d89336b2c"/>
+				<textElement>
+					<font size="14" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Inventory Report]]></text>
+			</staticText>
+		</band>
+	</title>
+	<pageHeader>
+		<band splitType="Stretch"/>
+	</pageHeader>
+	<columnHeader>
+		<band height="41" splitType="Stretch">
+			<staticText>
+				<reportElement x="0" y="1" width="52" height="20" uuid="05b966b6-e533-452f-bc52-d3186ef62fba"/>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[ID]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="71" y="1" width="100" height="20" uuid="9470085d-8382-4100-9be7-ecfee6e807db"/>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Type]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="214" y="1" width="100" height="20" uuid="7a15f4c5-320d-4497-ab54-859800acab3a"/>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Brand]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="361" y="1" width="100" height="20" uuid="cfa5c5ad-6b6c-431d-b361-0d741ffbdcd0"/>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Model]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="490" y="0" width="51" height="41" uuid="76dd245c-aa6c-4691-9c88-ae174a92763c"/>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Purchase Price]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="571" y="0" width="46" height="40" uuid="b168018b-fc4d-4ee0-b817-3e2c7c57f9f9"/>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Selling Price]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="641" y="1" width="46" height="21" uuid="1c7ecf1e-826a-4857-9af1-651a23f9eaf7"/>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Quantity]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="715" y="1" width="87" height="21" uuid="9e398654-9a62-4900-b2c6-219cc7c5ce85"/>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Date]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="29" splitType="Stretch">
+			<textField>
+				<reportElement x="0" y="9" width="40" height="20" uuid="7a464541-c8f6-4947-aa85-90511e0aab45"/>
+				<textFieldExpression><![CDATA[$F{product_id}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="71" y="9" width="108" height="20" uuid="212e6b62-0749-406e-af97-1d770b985581"/>
+				<textFieldExpression><![CDATA[$F{product_type}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="214" y="9" width="108" height="20" uuid="49dc1496-2e98-46b4-8e98-cccfca437804"/>
+				<textFieldExpression><![CDATA[$F{product_brand}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="361" y="9" width="108" height="20" uuid="7d1d8dad-a18a-48be-a24b-45245722a7de"/>
+				<textFieldExpression><![CDATA[$F{product_model}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="490" y="9" width="46" height="20" uuid="b2a5df5b-4b7e-4814-8f82-95bf5cc4e12a"/>
+				<textFieldExpression><![CDATA[$F{product_purchase_price}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="571" y="9" width="46" height="20" uuid="bc03b0a8-51b8-4f26-86b4-351c22f84a8f"/>
+				<textFieldExpression><![CDATA[$F{product_selling_price}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="641" y="9" width="46" height="20" uuid="adba4e37-82ea-482b-aee4-eb6774af5ecd"/>
+				<textFieldExpression><![CDATA[$F{product_quantity}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="715" y="9" width="87" height="20" uuid="39c0b6cf-f5d4-4cac-bd1c-28bf6b2b90b6"/>
+				<textFieldExpression><![CDATA[$F{product_last_changed_date}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<columnFooter>
+		<band splitType="Stretch"/>
+	</columnFooter>
+	<pageFooter>
+		<band splitType="Stretch"/>
+	</pageFooter>
+	<summary>
+		<band splitType="Stretch"/>
+	</summary>
+</jasperReport>
