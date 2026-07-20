@@ -1,0 +1,38 @@
+Schema: `pcvillage`
+
+Tables:{
+`employee`
+`inventory`
+`sales`
+}
+
+Employee Columns:{
+emp_id (Primary Key)
+emp_first_name
+emp_last_name
+emp_address
+emp_userType
+emp_username
+emp_password
+}
+
+Inventory Columns:{
+product_id (Primary Key)
+product_type
+product_brand
+product_model
+product_purchase_price
+product_selling_price
+product_quantity
+product_last_changed_date
+}
+
+Sales Columns:{
+sales_id (Primary Key)
+product_id Foreign Key refers `inventory` (product_id)
+cashier_id Foreign Key refers `employee` (emp_id)
+sales_product_price
+sales_quantity_sold
+sales_total_price
+sales_date_of_purchase
+}
