@@ -1,0 +1,1714 @@
+                           name "fileio"
+
+org 100h
+
+
+.data
+
+
+file1 db "d:\Inventory.txt", 0  
+file2 db "d:\Quantity.txt", 0
+file3 db "d:\Price.txt", 0
+file4 db "d:\Receipt.txt", 0
+handle dw 0
+flag db 0
+flagAnItemIsZeroQty db 0
+DeleteCatchPriorItem dw 0
+DeleteCatchPosteriorItem dw 0 
+catch dw 0
+catchQty dw 0
+catchSumPrice dw 0
+catchIndexBuy dw 0
+catchQtyDifference dw 0     
+
+ 
+
+
+zero db 200 dup(20h) 
+msg0 db 0Ah,0Dh,"$" 
+msg1 db "Inventory: $"
+msg2 db 0Ah,0Dh,0Ah,0Dh,"Add Item (press a)",0Ah,0Dh
+     db "Buy (press b)",0Ah,0Dh  
+     db "Delete Item (press d)",0Ah,0Dh
+     db "Show Inventory (press i)",0Ah,0Dh
+     db "Press Enter to exit", 0Ah,0Dh,"$"      
+msg3 db "Show inventory by set (10 item per set)",0Ah,0Dh
+     db "Type number of the set to show: $"
+msg4 db "Qty: $"
+msg4_2 db "Price: $"
+msg5 db "Name of product: $"
+msg6 db "Quantity (limit of 110): $" 
+msg6_2 db "Price (limit of 100): $" 
+msg7 db 0Ah,0Dh,"Enter ID No. of item to delete: $"
+msg8 db 0Ah,0Dh,"Successfully Deleted!$" 
+msg9 db "ID No. of product to buy: $" 
+msg10 db "Press b to buy more (limit of 5 items per buy): $"
+msg11 db "Price: $"
+msg12 db "Quantity: $"
+msg13 db "Complete purchase and print receipt? (press y): $"
+
+catchForQty dw 0 
+index_price dw 0
+index_receipt dw 0
+index_quantity dw 0
+index_inventory dw 0
+index_buffer dw 0
+index_inventoryCounter dw 0,400 dup(20001)
+counterForInventory dw 0
+indexFor_InvCounter dw 2
+counterForShowInvent dw 0
+counter db 0,0,1 
+counter1 dw 0
+
+
+ 
+inventory db 500 dup(0)
+;dummy db 200 dup(0)
+price db 500 dup(0)
+quantity db 500 dup(0)  
+buffer db 500 dup(0)
+receipt db 500 dup(0)  
+                          
+
+              
+
+.code
+
+  ; Open the file 
+  
+    
+    mov ah, 3Dh          
+    mov al, 0            
+    lea dx, file1   
+    int 21h              
+
+    ; Check if file opened successfully            
+
+    mov handle, ax 
+    
+    mov dl, 30h
+    mov ah, 2
+    int 21h
+    
+    mov dl, 30h
+    int 21h
+    
+    mov dl, 31h
+    int 21h  
+    
+    mov dl, 20h
+    int 21h 
+
+
+read_loop:
+    ; Read from the file
+    
+    
+    mov ah, 3Fh          
+    mov bx, handle  
+    mov cx, 1
+    mov si, index_buffer           
+    lea dx, buffer[si] 
+    int 21h     
+    
+    mov dl, buffer[si] 
+    
+    mov di, index_inventory
+    mov inventory[di], dl  
+    
+    mov bx, indexFor_InvCounter
+    mov dx, counterForInventory
+    mov index_inventoryCounter[bx], dx 
+                                       
+    cmp buffer[si], "#"          
+    je end_of_file
+    
+    cmp buffer[si],","
+    je skip1
+        cmp buffer[si], "."
+        je skipBuffer 
+            mov ah, 2 
+            mov dl, buffer[si]
+            int 21h
+        skipBuffer:     
+        
+        jmp noNewLine
+         
+    skip1: 
+        add counter[2], 1
+        
+        cmp counter[2], 9
+        jle skipCounter1
+            add counter[1], 1
+            mov counter[2], 0 
+        skipCounter1:
+        
+        cmp counter[1], 9
+        jle skipCounter0
+            add counter[0], 1
+            mov counter[1], 0
+        skipCounter0:
+        
+        mov ah, 2
+        mov dl, 0Ah 
+        int 21h
+        
+        mov dl, 0Dh
+        int 21h    
+        
+        mov dl, counter[0]
+        add dl, 30h
+        int 21h    
+        
+        mov dl, counter[1] 
+        add dl, 30h
+        int 21h
+        
+        mov dl, counter[2]
+        add dl, 30h
+        int 21h  
+        
+        mov dl, 20h
+        int 21h 
+      
+        
+    noNewLine:
+    
+    
+    
+    ; Check for end of file 
+    
+    cmp buffer[si-1], ","
+    jne skip 
+        add indexFor_InvCounter, 2
+    skip: 
+    
+      
+    add counterForInventory, 1
+    add index_buffer, 1 
+    add index_inventory, 1
+    
+    cmp index_buffer, 256
+    jne read_loop
+    mov index_buffer, 0
+
+
+    jmp read_loop 
+                                                         
+
+end_of_file:
+    ; Close the file
+    mov ah, 3Eh          
+    mov bx, handle  
+    int 21h 
+    
+    mov ah, 3Dh          
+    mov al, 0            
+    lea dx, file2   
+    int 21h 
+    
+    
+    mov handle, ax 
+    
+     
+    mov dl, 0Ah
+    mov ah, 2
+    int 21h
+    
+    mov dl, 0Dh
+    int 21h
+    
+    mov dl, 0Ah
+    int 21h
+    
+    mov dl, 0Dh
+    int 21h 
+    
+    mov index_inventory, 0 
+    mov si, 0  
+    mov counter[2], 1
+    mov counter[1], 0
+    mov counter[0], 0 
+    
+    mov dl, 30h
+    int 21h
+    
+    mov dl, 30h
+    int 21h
+    
+    mov dl, counter[2] 
+    add dl, 30h
+    int 21h
+    
+    mov dl, 20h
+    int 21h
+    
+    
+    readQuantityloop:
+    
+        mov si, index_inventory
+        
+        cmp inventory[si], "#"
+        je endRQloop
+        
+        cmp inventory[si], ","
+        je skipCommaRQ
+        
+            mov dl, inventory[si]
+            mov ah, 2
+            int 21h
+            jmp noNewLineRQ
+        
+        skipCommaRQ: 
+        
+            add counter[2], 1
+        
+            cmp counter[2], 9
+            jle skipCounterRQ1
+                add counter[1], 1
+                mov counter[2], 0 
+            skipCounterRQ1:
+        
+            cmp counter[1], 9
+            jle skipCounterRQ0
+                add counter[0], 1
+                mov counter[1], 0
+            skipCounterRQ0:
+            
+            mov dl, 20h
+            mov ah, 2
+            int 21h 
+            
+            lea dx, msg4
+            mov ah, 9
+            int 21h
+            
+            
+                   
+            loopquantity:       
+                mov ah, 3Fh          
+                mov bx, handle  
+                mov cx, 1
+                mov si, index_quantity           
+                lea dx, quantity[si] 
+                int 21h 
+                
+                cmp quantity[si], ","
+                je exitloopquantity 
+                
+                mov dl, quantity[si]
+                mov ah, 2
+                int 21h 
+                
+                
+                
+                add index_quantity, 1
+                
+            jmp loopquantity
+            exitloopquantity:
+            add index_quantity, 1
+        
+            mov ah, 2
+            mov dl, 0Ah 
+            int 21h
+        
+            mov dl, 0Dh
+            int 21h    
+        
+            mov dl, counter[0]
+            add dl, 30h
+            int 21h    
+        
+            mov dl, counter[1] 
+            add dl, 30h
+            int 21h
+        
+            mov dl, counter[2]
+            add dl, 30h
+            int 21h  
+        
+            mov dl, 20h
+            int 21h     
+        
+        noNewLineRQ: 
+        
+        add index_inventory, 1
+        
+        jmp readQuantityloop
+        
+    endRQloop: 
+    
+    mov dl, 20h
+    mov ah, 2
+    int 21h 
+            
+    lea dx, msg4
+    mov ah, 9
+    int 21h 
+    
+    loopquantity1:       
+        mov ah, 3Fh          
+        mov bx, handle  
+        mov cx, 1
+        mov si, index_quantity           
+        lea dx, quantity[si] 
+        int 21h 
+                
+        cmp quantity[si], "#"
+        je exitloopquantity1 
+                
+        mov dl, quantity[si]
+        mov ah, 2
+        int 21h 
+                
+        add index_quantity, 1
+                
+    jmp loopquantity1
+    exitloopquantity1:
+
+                    
+    mov ah, 3Eh          
+    mov bx, handle  
+    int 21h
+    
+    mov ah, 3Dh          
+    mov al, 0            
+    lea dx, file3  
+    int 21h  
+    mov handle, ax
+    
+    mov ah, 3Fh          
+    mov bx, handle  
+    mov cx, index_quantity
+    add cx, 2          
+    lea dx, price 
+    int 21h 
+    
+    mov ah, 3Eh          
+    mov bx, handle  
+    int 21h
+    
+    mov cx, index_quantity
+    mov index_price, cx
+
+    
+
+    loop1:  
+    
+    lea dx, msg2 
+    mov ah, 09
+    int 21h
+         
+    mov ax, 0
+    int 16h
+    
+    cmp al, 61h
+    je addItem
+    
+    cmp al, 62h
+    je buy
+    
+    cmp al, 64h
+    je deleteItem 
+    
+    cmp al, 69h
+    je showInventory  
+    
+    cmp al, 0Dh
+    je exit
+    
+    jmp loop1
+    
+addItem:
+
+       
+    lea dx, msg0
+    mov ah, 9
+    int 21h  
+    
+    lea dx, msg0
+    int 21h
+             
+    lea dx, msg5
+    int 21h
+    
+    mov si, counterForInventory
+    mov inventory[si], ","
+    add counterForInventory, 1
+    mov si, counterForInventory
+    
+    loopInputAddItemName:
+    
+        mov ah, 1
+        int 21h 
+        
+        cmp al, 0Dh
+        je exitloopName
+        
+        mov inventory[si], al
+        
+        add si, 1 
+        add counterForInventory, 1
+       
+        jmp loopInputAddItemName 
+        
+    exitloopName: 
+    mov inventory[si], "#"  
+    
+    add indexFor_InvCounter, 2
+    mov si, indexFor_InvCounter
+    mov cx, counterForInventory
+    mov index_inventoryCounter[si], cx 
+    sub si, 2
+    add index_inventoryCounter[si], 1
+    
+    mov si, index_quantity
+    mov quantity[si], ","
+    add index_quantity, 1    
+    
+    returnToAddQty:
+    lea dx, msg0
+    mov ah, 9
+    int 21h
+    
+    lea dx, msg6
+    int 21h
+    
+    mov si, index_quantity
+    mov ah, 1
+    int 21h
+    mov quantity[si], al 
+    
+    cmp al, 0Dh 
+    je returnToAddQty
+    add index_quantity, 1
+    
+    mov si, index_quantity
+    mov ah, 1
+    int 21h
+    mov quantity[si], al
+    
+    cmp al, 0Dh 
+    je skipinput 
+    add index_quantity, 1
+    jmp contInput
+    skipinput:
+    sub index_quantity, 1
+    jmp returnToAddQty 
+    contInput:
+    
+    mov si, index_quantity 
+    mov ah, 1
+    int 21h
+    mov quantity[si], al
+    
+    cmp al, 0Dh 
+    je skipinput1 
+    add index_quantity, 1
+    jmp contInput1
+    skipinput1:
+    sub index_quantity, 2
+    jmp returnToAddQty 
+    contInput1: 
+                           
+    mov si, index_quantity
+    mov quantity[si], "#"
+    
+    mov si, index_price
+    mov price[si], ","
+    add index_price, 1 
+    
+    returnToAddPrice:
+    
+    lea dx, msg0
+    mov ah, 9
+    int 21h
+    
+    lea dx, msg6_2
+    int 21h
+    
+    mov si, index_price
+    mov ah, 1
+    int 21h
+    mov price[si], al 
+    
+    cmp al, 0Dh 
+    je returnToAddPrice
+    add index_price, 1
+    
+    mov si, index_price
+    mov ah, 1
+    int 21h
+    mov price[si], al
+    
+    cmp al, 0Dh 
+    je skipinput2 
+    add index_price, 1
+    jmp contInput2
+    skipinput2:
+    sub index_price, 1
+    jmp returnToAddPrice
+    contInput2:
+    
+    mov si, index_price 
+    mov ah, 1
+    int 21h
+    mov price[si], al
+    
+    cmp al, 0Dh 
+    je skipinput3 
+    add index_price, 1
+    jmp contInput3
+    skipinput3:
+    sub index_price, 2
+    jmp returnToAddPrice 
+    contInput3: 
+                           
+    mov si, index_price
+    mov price[si], "#"
+    
+        
+    jmp updateFiles
+    
+buy:
+    
+    
+    lea dx, msg0
+    mov ah, 9
+    int 21h
+    int 21h
+    
+    lea dx, msg9
+    int 21h  
+    
+    mov ax, 0
+    
+    loopInputBuy: 
+        mov bx, 0
+        mov bx, 10
+        mul bx
+            
+        mov cx, ax
+            
+        mov ah, 1
+        int 21h 
+            
+        cmp al, 0Dh
+        je exitLoopBuy
+            
+        sub al, 30h
+             
+        mov ah, 0
+        add cx, ax
+        mov ax, cx
+        jmp loopInputBuy
+        
+    exitLoopBuy:
+        
+    mov ax, cx
+    mov bx, 10
+    div bx
+    mov catch, ax
+    sub catch, 1
+    mov bx, 2
+    mul bx 
+    mov bx, ax 
+    
+    mov catchIndexBuy, bx
+    
+    sub bx, 2
+    mov cx, index_inventoryCounter[bx] 
+    mov bx, cx
+    
+    cmp flag, 0
+    jne index_receiptIsNotZero
+        mov index_receipt, 0
+    index_receiptIsNotZero:
+        
+    loopBuyItem:
+        
+        mov si, index_receipt
+    
+        cmp inventory[bx], ","
+        je exitLoopBuyItem 
+        
+        cmp inventory[bx], "#"
+        je exitLoopBuyItem
+        
+        mov cl, inventory[bx]
+        mov receipt[si], cl
+        
+        add bx, 1
+        add index_receipt, 1 
+        
+        jmp loopBuyItem
+        
+    exitLoopBuyItem:
+    
+    mov receipt[si], 20h
+    add index_receipt, 1
+    
+        
+    mov si, index_receipt
+    mov receipt[si], "Q"
+    add index_receipt, 1
+    
+    mov si, index_receipt
+    mov receipt[si], "t"
+    add index_receipt, 1
+    
+    mov si, index_receipt
+    mov receipt[si], "y"
+    add index_receipt, 1
+    
+    mov si, index_receipt
+    mov receipt[si], ":"
+    add index_receipt, 1
+    
+    mov si, index_receipt
+    mov receipt[si], 20h
+    add index_receipt, 1
+    
+    returnToBuyQty:
+    
+    lea dx, msg0
+    mov ah, 9
+    int 21h
+    
+    lea dx, msg12
+    int 21h 
+    
+    mov si, index_receipt
+    mov ah, 1
+    int 21h
+    mov receipt[si], al
+    mov ah, 0 
+    sub al, 30h
+    mov bx, 100
+    mul bx
+    mov cx, ax 
+    
+    add al, 30h
+    cmp al, 0Dh 
+    je returnToBuyQty
+    add index_receipt, 1
+    
+    mov si, index_receipt
+    mov ah, 1
+    int 21h
+    mov receipt[si], al
+    mov ah, 0
+    sub al, 30h
+    mov bx, 10
+    mul bx
+    add cx, ax 
+    
+    add al, 30h
+    cmp al, 0Dh 
+    je skipinput4 
+    add index_receipt, 1
+    jmp contInput4
+    skipinput4:
+    sub index_receipt, 1
+    jmp returnToBuyQty
+    contInput4:
+    
+    mov si, index_receipt 
+    mov ah, 1
+    int 21h
+    mov receipt[si], al
+    mov ah, 0
+    sub al, 30h
+    add cx, ax
+    mov catchQty, cx 
+    
+    add al, 30h
+    cmp al, 0Dh 
+    je skipinput5 
+    add index_receipt, 1
+    jmp contInput5
+    skipinput5:
+    sub index_receipt, 2
+    jmp returnToBuyQty 
+    contInput5: 
+                           
+    mov si, index_receipt
+    mov receipt[si], 20h
+    add index_receipt, 1 
+    
+    mov ax, catch
+    mov bx, 4
+    mul bx
+    mov si, ax
+    mov catch, ax
+    mov cx, 0 
+    mov ax, 0
+    
+    loopGetQty: 
+    
+        mov bx, 0
+        mov bx, 10
+        mul bx
+            
+        mov cx, ax
+            
+        mov al, quantity[si] 
+            
+        cmp al, ","
+        je exitLoopGetQty
+        
+        cmp al, "#"
+        je exitLoopGetQty
+            
+        sub al, 30h
+        
+        add si, 1     
+        mov ah, 0
+        add cx, ax
+        mov ax, cx
+        
+        jmp loopGetQty
+    exitLoopGetQty:
+    
+    mov ax, cx
+    mov bx, 10
+    div bx
+    mov cx, catchQty
+    sub ax, cx
+    
+    mov catchQtyDifference, ax
+    
+    
+    mov dx, 0 
+    sub si, 1
+    
+    loopLoadDifference:
+        
+        mov bx, 10
+        div bx 
+        add dx, 30h
+        
+        cmp quantity[si], ","
+        je exitLoopDifference 
+
+        mov quantity[si], dl
+        mov dx, 0
+        
+        cmp si, 0
+        je exitLoopDifference
+        
+        sub si, 1 
+    
+        jmp loopLoadDifference
+    
+    exitLoopDifference:
+    
+        
+    
+    mov si, catch
+    mov ax, 0
+    
+    
+    loopGetPrice: 
+    
+        mov bx, 0
+        mov bx, 10
+        mul bx
+            
+        mov cx, ax
+            
+        mov al, price[si] 
+            
+        cmp al, ","
+        je exitLoopGetPrice
+        
+        cmp al, "#"
+        je exitLoopGetPrice
+            
+        sub al, 30h
+        
+        add si, 1     
+        mov ah, 0
+        add cx, ax
+        mov ax, cx
+        
+        jmp loopGetPrice
+    exitLoopGetPrice:
+    
+    mov ax, cx
+    mov bx, 10
+    div bx
+    
+    mov bx, catchQty
+    mul bx
+    
+    add catchSumPrice, ax 
+    
+    mov si, index_receipt
+    mov receipt[si], "P" 
+    add index_receipt, 1
+    
+    mov si, index_receipt
+    mov receipt[si], "r" 
+    add index_receipt, 1
+    
+    mov si, index_receipt
+    mov receipt[si], "i" 
+    add index_receipt, 1
+    
+    mov si, index_receipt
+    mov receipt[si], "c" 
+    add index_receipt, 1
+    
+    mov si, index_receipt
+    mov receipt[si], "e" 
+    add index_receipt, 1
+    
+    mov si, index_receipt
+    mov receipt[si], ":" 
+    add index_receipt, 1
+    
+    mov si, index_receipt
+    mov receipt[si], 20h 
+    add index_receipt, 1
+    
+    mov cx, 0
+    mov dx, 0
+    
+    loopPushPrice:
+    
+        cmp ax, 0
+        je exitloopPushPrice 
+    
+        mov bx, 10
+        div bx
+        
+        push dx
+        
+        add cx, 1
+        mov dx, 0
+    
+        jmp loopPushPrice
+    
+    exitloopPushPrice: 
+    
+    
+    loopPopPrice:
+        
+        mov si, index_receipt
+        mov dx, 0
+        
+        pop dx
+        
+        add dx, 30h
+        
+        mov receipt[si], dl
+        
+        add index_receipt, 1
+        sub cx, 1
+        
+        cmp cx, 0
+        je exitloopPopPrice
+    
+        
+        jmp loopPopPrice 
+        
+    exitloopPopPrice:
+    
+    cmp  catchQtyDifference, 0
+    jne ItemIsNotZero
+    
+        mov flagAnItemIsZeroQty, 1     
+        mov bx, catchIndexBuy
+        jmp DeleteItemWithZeroQty
+    
+    ItemIsNotZero:
+    
+    returnToBuyItem:
+    
+    mov si, index_receipt
+    mov receipt[si], 0Ah
+    add index_receipt, 1
+    
+    mov si, index_receipt
+    mov receipt[si], 0Dh
+    add index_receipt, 1
+    
+    lea dx, msg0
+    mov ah, 9
+    int 21h
+    
+    lea dx, msg10
+    int 21h
+    
+    mov ax, 0
+    int 16h 
+    
+    add flag, 1
+    cmp flag, 5
+    je flagIs5
+    
+    cmp al, "b"
+    je buy
+
+    
+    flagIs5:
+    
+    mov si, index_receipt
+    mov receipt[si], "T"
+    add index_receipt, 1
+    
+    mov si, index_receipt
+    mov receipt[si], "o"
+    add index_receipt, 1
+    
+    mov si, index_receipt
+    mov receipt[si], "t"
+    add index_receipt, 1
+    
+    mov si, index_receipt
+    mov receipt[si], "a"
+    add index_receipt, 1
+    
+    mov si, index_receipt
+    mov receipt[si], "l"
+    add index_receipt, 1
+    
+    mov si, index_receipt
+    mov receipt[si], ":"
+    add index_receipt, 1
+    
+    mov si, index_receipt
+    mov receipt[si], 20h
+    add index_receipt, 1
+    
+    mov ax, catchSumPrice
+    mov cx, 0
+    mov dx, 0
+    
+    loopPushSumPrice:
+        
+        cmp ax, 0
+        je exitloopPushSumPrice
+        
+        mov bx, 10
+        div bx
+        
+        push dx
+        mov dx, 0
+        
+        add cx, 1
+    
+        jmp loopPushSumPrice
+    
+    exitloopPushSumPrice:
+    
+    loopPopSumPrice:
+        
+        mov si, index_receipt
+        mov dx, 0
+        
+        pop dx
+        add dx, 30h
+        
+        mov receipt[si], dl
+        
+        add index_receipt, 1
+        sub cx, 1
+        
+        cmp cx, 0
+        je exitloopPopSumPrice
+    
+        
+        jmp loopPopSumPrice
+    exitloopPopSumPrice:
+    
+    mov si, 0 
+    
+    lea dx, msg0
+    mov ah, 9
+    int 21h 
+    
+    lea dx, msg0
+    mov ah, 9
+    int 21h
+    
+    loopShowReceipt:
+    
+        cmp receipt[si], 0
+        je exitloopShowReceipt
+        
+        mov dl, receipt[si]
+        mov ah, 2
+        int 21h
+        
+        add si, 1 
+    
+    
+        jmp loopShowReceipt
+    
+    exitloopShowReceipt:
+    
+    lea dx, msg0
+    mov ah, 9
+    int 21h
+    int 21h
+    
+    lea dx, msg13
+    int 21h  
+    
+    mov ax, 0
+    int 16h
+    
+    cmp al, "y"
+    je updateFiles
+    
+        
+    
+    jmp loop1
+    
+  
+deleteItem:
+    
+    
+    
+    lea dx, msg7
+    mov ah, 09
+    int 21h
+    
+    mov ax, 0
+    loopInputDelete: 
+        mov bx, 0
+        mov bx, 10
+        mul bx
+            
+        mov cx, ax
+            
+        mov ah, 1
+        int 21h 
+            
+        cmp al, 0Dh
+        je exitLoopDelete
+            
+        sub al, 30h
+             
+        mov ah, 0
+        add cx, ax
+        mov ax, cx
+        jmp loopInputDelete
+        
+    exitLoopDelete: 
+
+        
+    mov ax, cx
+    mov bx, 10
+    div bx
+    mov bx, 2
+    mul bx 
+    mov bx, ax 
+    
+    DeleteItemWithZeroQty:
+    mov cx, index_inventoryCounter[bx]
+    
+    mov DeleteCatchPosteriorItem, cx 
+    
+    sub bx, 2
+    
+    mov cx, index_inventoryCounter[bx]
+     
+    
+    mov DeleteCatchPriorItem, cx
+    
+    
+    
+    mov catch, bx 
+    
+    mov bx, indexFor_InvCounter 
+    
+    add catch, 2
+    
+    
+    loopIndexInventoryCounter:
+    
+        cmp index_inventoryCounter[bx+2], 20001
+        je skip2
+        mov cx, index_inventoryCounter[bx+2]
+        mov ax, index_inventoryCounter[bx]
+        sub cx, ax
+        mov index_inventoryCounter[bx+2], cx
+        skip2:     
+        
+        sub bx, 2
+        
+        cmp bx, catch
+        jl indexInventoryCounterFinish
+        
+        
+        jmp loopIndexInventoryCounter
+         
+    indexInventoryCounterFinish:
+    
+    mov bx, catch
+    mov si, catch
+    add si, 2 
+    
+    cmp index_inventoryCounter[bx+2], 20001
+    jne skip4
+        sub index_inventoryCounter[bx-2], 1
+        mov index_inventoryCounter[bx], 20001
+        mov cx, index_inventoryCounter[bx-2] 
+        mov counterForInventory, cx 
+        jmp noskip4
+    skip4:   
+    
+    loopIndexInventoryCounterDelete:
+        
+        cmp index_inventoryCounter[si], 20001
+        je skip3
+            mov ax, index_inventoryCounter[bx-2]
+            mov cx, index_inventoryCounter[si]
+            add ax, cx
+            mov index_inventoryCounter[bx], ax 
+            jmp noskip3
+        skip3:
+            mov index_inventoryCounter[bx], 20001
+        noskip3:
+        
+        
+        add bx, 2
+        add si, 2
+        
+        cmp index_inventoryCounter[bx], 20001
+        je exitloopIndexInventoryCounterDelete
+        
+        jmp loopIndexInventoryCounterDelete
+         
+    exitloopIndexInventoryCounterDelete:
+    
+    mov bx, index_inventoryCounter[bx-4]
+    mov counterForInventory, bx 
+    
+    noskip4:
+    sub indexFor_InvCounter, 2
+      
+    mov si, DeleteCatchPosteriorItem
+    mov di, DeleteCatchPriorItem
+    
+    cmp inventory[si], "#"
+    jne notEnd
+        
+        sub di, 1
+        mov inventory[di], "#"
+        add di, 1
+        add si, 1
+    
+    notEnd:
+    
+    loopDeleteItem:
+    
+        cmp inventory[di], "#"
+        je exitLoopDeleteItem
+        
+        mov cl, inventory[si]
+        mov inventory[di], cl
+        
+        add di, 1
+        add si, 1 
+        
+        jmp loopDeleteItem
+        
+    exitLoopDeleteItem:
+        
+    mov inventory[di], 0 
+    
+    mov dx, 0
+    mov ax, catch
+    sub ax, 2
+    mov bx, 2
+    div bx
+    mov bx, 4
+    mul bx
+    mov bx, ax
+    add ax, 4
+    mov si, ax 
+    
+    sub si, 1
+    cmp quantity[si], "#"
+    jne skip5
+        sub bx, 1  
+        jmp noskip5    
+    skip5:   
+        add si, 1  
+    noskip5:
+    
+    loopDeleteQty:
+    
+        cmp quantity[bx], "#"
+        je exitloopDeleteQty
+        
+        mov cx, 0
+        mov cl, quantity[si]
+        mov quantity[bx], cl
+         
+        mov cx, 0
+        mov cl, price[si]
+        mov price[bx], cl
+        
+        add si, 1
+        add bx, 1
+                  
+        jmp loopDeleteQty
+        
+    exitloopDeleteQty:
+    mov quantity[bx], 0
+    mov price[bx], 0
+    
+    sub index_quantity, 4
+    sub index_price, 4
+    
+    cmp flagAnItemIsZeroQty, 1
+    jne flagIs0
+        mov flagAnItemIsZeroQty, 0
+        jmp returnToBuyItem
+    
+    flagIs0:
+    
+     
+    jmp updateFiles
+    
+showInventory:
+        
+        lea dx, msg3
+        mov ah, 09
+        int 21h 
+        
+        mov ax, 0
+        loopInput: 
+            mov bx, 0
+            mov bx, 10
+            mul bx
+            
+            mov cx, ax
+            
+            mov ah, 1
+            int 21h 
+            
+            cmp al, 0Dh
+            je exitLoop
+            
+            sub al, 30h
+             
+            mov ah, 0
+            add cx, ax
+            mov ax, cx
+            jmp loopInput
+        
+            exitLoop:
+            
+        mov counter1, 0
+        mov ax, cx
+        mov bx, 10
+        div bx  
+        sub ax, 1 
+        mov catchForQty, ax
+        
+        mov bx, 20
+        mul bx
+        mov bx, ax 
+        mov cx, index_inventoryCounter[bx]
+         
+        cmp cx, 20001
+        jne jump
+        jmp loop1
+        jump:
+        
+        mov counterForShowInvent, cx 
+        
+        mov bx, cx 
+        
+        cmp inventory[bx], "#"
+        je loop1 
+        
+        mov bx, 20
+        div bx
+        
+        mov bx, 10
+        mul bx
+        
+        mov bx, 100
+        div bx
+        mov counter[0], al
+        
+        mov ax, dx 
+        mov dx, 0
+        mov bx, 10
+        div bx
+        mov counter[1], al
+        mov counter[2], 1
+        
+        lea dx, msg0
+        mov ah, 09
+        int 21h 
+        
+        lea dx, msg0
+        mov ah, 09
+        int 21h
+        
+        mov dl, counter[0]  
+        add dl, 30h
+        mov ah, 2
+        int 21h
+        
+        mov dl, counter[1] 
+        add dl, 30h
+        int 21h
+        
+        mov dl, counter[2] 
+        add dl, 30h
+        int 21h
+        
+        mov dl, 20h
+        int 21h
+        
+        mov ax, catchForQty
+        mov bx, 40
+        mul bx
+        
+        mov di, ax
+        mov si, ax
+        
+        
+        loopInventory:
+        
+           mov bx, counterForShowInvent
+            
+           cmp inventory[bx], "#"
+           je printLastQty
+          
+           
+           cmp inventory[bx], ","
+           je skipComma
+                cmp inventory[bx], "."
+                je dontPrint
+                    mov dl, inventory[bx]
+                    mov ah, 2
+                    int 21h
+                dontPrint: 
+           jmp skipNewLine
+           skipComma:  
+           
+                add counter[2], 1
+                
+                cmp counter[2], 9
+                jle skipCounter_1
+                    add counter[1], 1
+                    mov counter[2], 0 
+                skipCounter_1:
+        
+                cmp counter[1], 9
+                jle skipCounter_0
+                    add counter[0], 1
+                    mov counter[1], 0
+                skipCounter_0:
+                
+                add counter1, 1
+                
+                cmp counter1, 10
+                je printLastQty 
+                
+                 mov dl, 20h
+                 mov ah, 2
+                 int 21h 
+            
+                 lea dx, msg4
+                 mov ah, 9
+                 int 21h
+                
+                loopQtyforShowInv:
+                
+                    cmp quantity[di], ","
+                    je exitLoopQty 
+                    
+                    mov dl, quantity[di]
+                    mov ah, 2
+                    int 21h
+                    
+                    add di, 1
+                    
+                    jmp loopQtyforShowInv  
+                        
+                exitLoopQty:
+                add di, 1 
+                
+                mov dl, 20h
+                mov ah, 2
+                int 21h
+                
+                lea dx, msg4_2
+                mov ah, 9
+                int 21h
+                
+                loopPriceforShowInv:
+                
+                    cmp price[si], ","
+                    je exitLoopPrice 
+                    
+                    mov dl, price[si]
+                    mov ah, 2
+                    int 21h
+                    
+                    add si, 1
+                    
+                    jmp loopPriceforShowInv  
+                        
+                exitLoopPrice:
+                add si, 1
+                
+                       
+           
+                mov dl, 0Ah
+                mov ah, 2
+                int 21h
+                
+                mov dl, 0Dh
+                int 21h 
+                
+                mov dl, counter[0]
+                add dl, 30h
+                int 21h
+                
+                mov dl, counter[1]
+                add dl, 30h
+                int 21h
+                
+                mov dl, counter[2]
+                add dl, 30h
+                int 21h   
+                
+                mov dl, 20h
+                int 21h
+                
+                
+           
+           skipNewLine:
+           
+           add counterForShowInvent, 1
+           
+       
+       jmp loopInventory
+       
+       printLastQty:
+            mov dl, 20h
+            mov ah, 2
+            int 21h 
+            
+            lea dx, msg4
+            mov ah, 9
+            int 21h
+            
+            loopLastQty: 
+  
+                cmp quantity[di], "#"
+                je exitLastQty
+                
+                cmp quantity[di], ","
+                je exitLastQty 
+                    
+                mov dl, quantity[di]
+                mov ah, 2
+                int 21h
+                
+                add di, 1 
+                        
+            jmp loopLastQty 
+            
+            exitLastQty:
+            
+            mov dl, 20h
+            mov ah, 2
+            int 21h
+            
+            lea dx, msg4_2
+            mov ah, 9
+            int 21h
+            
+            loopLastPrice: 
+  
+                cmp price[si], "#"
+                je loop1 
+                
+                cmp price[si], ","
+                je loop1 
+                    
+                mov dl, price[si]
+                mov ah, 2
+                int 21h
+                
+                add si, 1 
+                        
+            jmp loopLastPrice
+            
+            
+            
+           
+        updateFiles:
+        
+        mov ax, 0
+        mov bx, 0
+        mov cx, 0
+        mov dx, 0
+        mov si, 0
+        mov di, 0
+        
+        mov ah, 3Ch
+        mov cx, 0
+        mov dx, offset file1
+        int 21h
+        mov handle, ax 
+
+        ; write to file:
+        mov ah, 40h
+        mov bx, handle
+        lea dx, inventory
+        mov cx, counterForInventory 
+        add cx, 1
+        int 21h 
+        
+           ; write to file:
+        mov ah, 40h
+        mov bx, handle
+        lea dx, zero
+        mov cx, 200
+        int 21h 
+
+        ; close c:\emu8086\vdrive\C\test1\file1.txt
+        
+        mov ah, 3eh
+        mov bx, handle
+        int 21h 
+                  
+        mov ax, 0
+        mov bx, 0
+        mov cx, 0
+        mov dx, 0
+        mov si, 0
+        mov di, 0 
+        
+        mov ah, 3Ch
+        mov cx, 0
+        mov dx, offset file2
+        int 21h
+        mov handle, ax 
+ 
+        ;write to file:
+        mov ah, 40h
+        mov bx, handle
+        lea dx, quantity
+        mov cx, index_quantity
+        add cx, 1
+        int 21h
+        
+        mov ah, 40h
+        mov bx, handle
+        lea dx, zero
+        mov cx, 200
+        int 21h  
+        
+        ; close c:\emu8086\vdrive\C\test1\file1.txt
+        mov ah, 3eh
+        mov bx, handle
+        int 21h 
+        
+        mov ax, 0
+        mov bx, 0
+        mov cx, 0
+        mov dx, 0
+        mov si, 0
+        mov di, 0 
+        
+        mov ah, 3Ch
+        mov cx, 0
+        mov dx, offset file3
+        int 21h
+        mov handle, ax 
+ 
+        ;write to file:
+        mov ah, 40h
+        mov bx, handle
+        lea dx, price
+        mov cx, index_price
+        add cx, 1
+        int 21h
+        
+        mov ah, 40h
+        mov bx, handle
+        lea dx, zero
+        mov cx, 200
+        int 21h   
+        
+        ; close c:\emu8086\vdrive\C\test1\file1.txt
+        mov ah, 3eh
+        mov bx, handle
+        int 21h
+        
+        
+        cmp flag, 0
+        je skipPrintReceipt
+        
+        mov flag, 0
+        mov ax, 0
+        mov bx, 0
+        mov cx, 0
+        mov dx, 0
+        mov si, 0
+        mov di, 0
+        
+        mov ah, 3Ch
+        mov cx, 0
+        mov dx, offset file4
+        int 21h
+        mov handle, ax 
+
+        ; write to file:
+        mov ah, 40h
+        mov bx, handle
+        lea dx, receipt
+        mov cx, index_receipt 
+        int 21h 
+        
+           ; write to file:
+        mov ah, 40h
+        mov bx, handle
+        lea dx, zero
+        mov cx, 200
+        int 21h 
+
+        ; close c:\emu8086\vdrive\C\test1\file1.txt
+        
+        mov ah, 3eh
+        mov bx, handle
+        int 21h
+        
+        
+            
+            loopClearReceipt:
+                
+                mov bx, index_receipt
+                mov receipt[bx], 0
+                
+                cmp index_receipt, 0
+                je skipPrintReceipt
+                
+                sub index_receipt, 1
+            
+                jmp loopClearReceipt
+        
+            exitloopClearReceipt:
+        
+        skipPrintReceipt:       
+        
+
+        jmp loop1
+exit:
+    mov ax, 4C00h    
+    int 21h  
