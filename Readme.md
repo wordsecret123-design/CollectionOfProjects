@@ -17,4 +17,4 @@ I hope that despite the bugs, you will see that I am capable of programming some
 Sincerely,
 Rommel D. Bagasina
 
-P.S. I am currently learning how to build Neural Networks using Transformers the very backbone of Large Language models. I think I already have a good grasp of the architecture. The only thing left to do is to actually build a small scale example. I'm only going to make it memorize, not actually "understand" the context. But by adding more layers and more parameters and billions of training data, my implementation would in theory actually become a working LLM. 
+P.S. I am currently learning how to build Neural Networks using Transformers the very backbone of Large Language models. I think I already have a good grasp of the architecture. The only thing left to do is to actually build a small scale example. I'm only going to make it memorize, not actually "understand" the context. But by adding more layers, more parameters, a better tokenization algorithm, and billions of training data, my implementation would in theory actually become a working LLM. 
