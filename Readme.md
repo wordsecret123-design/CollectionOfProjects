@@ -125,6 +125,26 @@ Engineering problems explored:
 Technologies: x86 Assembly
 
 ---
+⚙️ CPU Scheduling Calculator
+
+Problem:
+Operating systems must decide how CPU time is distributed among multiple processes, balancing factors such as arrival time, execution time, and scheduling priority. Different scheduling algorithms can produce significantly different execution orders and performance characteristics.
+
+The challenge was to model these scheduling decisions programmatically and calculate the resulting execution behavior.
+
+Solution:
+I implemented a CPU scheduling calculator that simulates process execution under different scheduling algorithms, producing the resulting schedules and performance metrics.
+
+Engineering problems explored:
+
+* How can operating-system scheduling policies be translated into executable algorithms?
+* How can process arrival and execution times be modeled accurately?
+* How can scheduling algorithms be simulated to compare their behavior and performance?
+* How can execution schedules and timing metrics be calculated from a sequence of scheduling decisions?
+
+Technologies: C++, operating systems, CPU scheduling, algorithmic simulation
+
+---
 
 Engineering Focus
 
