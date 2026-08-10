@@ -1,4 +1,5 @@
 ### Rommel D. Bagasina
+Note: In every project there is a demo video or demo images included.
 
 ### Software Engineer & Low-Level Builder
 
