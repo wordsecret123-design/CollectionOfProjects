@@ -21,7 +21,7 @@ The projects below are experiments in solving those problems from the underlying
 
 ---
 
-Projects
+# Projects
 
 🥚 QuackSort — Automated Egg Sorting Machine
 
@@ -51,7 +51,6 @@ Engineering problems explored:
 Technologies: Python, OpenCV, Raspberry Pi, ESP32, WebSockets, stepper motors
 
 ---
-# Projects
 
 🚚 **Spotter Labs — Freight Rate Prediction**
 
