@@ -51,6 +51,41 @@ Engineering problems explored:
 Technologies: Python, OpenCV, Raspberry Pi, ESP32, WebSockets, stepper motors
 
 ---
+# Projects
+
+🚚 **Spotter Labs — Freight Rate Prediction**
+
+**Problem:** Freight rates vary based on factors such as pickup and delivery locations, distance, equipment type, shipment weight, market conditions, and quote activity. The challenge was to build a regression model capable of predicting freight rates from historical load data and then generate predictions for unseen loads, including a fixed-lane December forecast.
+
+**Solution:** I built a machine learning pipeline combining:
+
+* Data cleaning and preprocessing for numerical, categorical, and date-based features
+* Chronological train/validation splitting to better reflect real-world forecasting
+* Feature engineering from shipment dates
+* CatBoost regression for handling nonlinear relationships and categorical variables
+* Model evaluation using RMSE against a mean-prediction baseline
+* Hyperparameter experimentation with different tree depths and early stopping
+* Batch prediction for unseen validation loads and a fixed December forecasting dataset
+* Automated scoring using the provided assessment scorer
+
+The model uses shipment characteristics including pickup and delivery locations, geographic coordinates, distance, equipment, weight, market index, quote signal, and date-derived information to estimate the posted freight rate.
+
+**Engineering problems explored:**
+
+* How do you validate a model when the data has a temporal ordering?
+* How do you prevent future information from influencing model validation?
+* How do you handle both categorical and numerical features in the same model?
+* How do you determine whether a model is actually learning useful patterns rather than simply predicting the average?
+* How do you select model complexity without overfitting?
+* How do you handle missing and inconsistent data before it reaches the model?
+* How do you turn a trained model into a reproducible prediction pipeline for unseen data?
+* How do you evaluate a forecasting model when the eventual prediction period differs from the training data?
+
+**Results:** The CatBoost model substantially improved over the mean-prediction baseline, reducing validation RMSE from approximately **1525** to approximately **637**.
+
+**Technologies:** Python, Pandas, NumPy, CatBoost, Scikit-learn, Matplotlib
+
+---
 
 💬 Multi-Client Chatroom
 
