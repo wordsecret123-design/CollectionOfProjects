@@ -4,7 +4,7 @@ np.set_printoptions(threshold=np.inf)
 
 class model:
    
-    def __init__(self,*,modelFile = None,VocabSize = 4, widthOfEmbeddingMatrix = 20, NumberHeads = 4):
+    def __init__(self,*,modelFile = None,VocabSize = 4, widthOfEmbeddingMatrix = 16, NumberHeads = 4):
         self.__Ein = np.random.randn(VocabSize,widthOfEmbeddingMatrix)
         perHeadTokenSize = widthOfEmbeddingMatrix//NumberHeads
         self.__perHeadTokenWidth = perHeadTokenSize
@@ -33,23 +33,29 @@ class model:
         
     def trainModel(self,*,forwardPassedData=None,tokenListIDDict=None):
         sequenceFullLength = len(forwardPassedData)
-        # for outputCount in range(sequenceFullLength):
-        # previousOutputsList = [token for token in forwardPassedData[0:outputCount+1]]
         previousOutputsVectors, hiddenVector = self.doMultiHeadAttention(
             previousOutputsList=forwardPassedData,
             tokenListIDDict=tokenListIDDict
         )
-        hiddenVector = self.doLayerNorm(hiddenVector,previousOutputsVectors)
-        
+        hiddenVector = self.doOutputProjection(hiddenVector)
+        hiddenVector = self.doResidualAndLayerNorm(hiddenVector,previousOutputsVectors)
+        hiddenVector = self.doFeedForwardNetwork(hiddenVector) 
+               
     def doAttention(self,*,previousOutputsList,tokenListIDDict, 
-                    HeadEmbeddingMatrix = None, WQ, WK, WV):
+                    HeadEmbeddingMatrix, WQ, WK, WV):
         indices = [tokenListIDDict[token] for token in previousOutputsList]
         previousOutputsVectors = HeadEmbeddingMatrix[indices]
         PE = self.positional_encoding(len(previousOutputsList),self.__perHeadTokenWidth)
         previousOutputsVectors = previousOutputsVectors + PE
+        POV_WKDerivatives = self.calcDrvForMatrixMultL(previousOutputsVectors,WK)
+        WK_POVDerivatives = self.calcDrvForMatrixMultR(previousOutputsVectors,WK)
         previousOutputsK = previousOutputsVectors @ WK
         hiddenVector = previousOutputsVectors.copy()
+        HV_WQDerivatives = self.calcDrvForMatrixMultL(hiddenVector,WQ)
+        WQ_HVDerivatives = self.calcDrvForMatrixMultR(hiddenVector,WQ) 
         hiddenVector = hiddenVector @ WQ
+        HV_POKDerivatives = self.calcDrvForMatrixMultL(hiddenVector,previousOutputsK.T)
+        POK_HVDerivatives = self.calcDrvForMatrixMultL(previousOutputsK,hiddenVector.T)
         hiddenVector = hiddenVector @ previousOutputsK.T
         mask = np.triu(
             np.ones((len(previousOutputsVectors), len(previousOutputsVectors))),
@@ -57,11 +63,16 @@ class model:
         )
         hiddenVector[mask==1] = -np.inf
         hiddenVector = hiddenVector/math.sqrt(self.__perHeadTokenWidth)
-        hiddenVector = hiddenVector - np.max(hiddenVector,axis=1,keepdims=True)
-        hiddenVector = np.power(np.e,hiddenVector) / np.sum(np.power(np.e,hiddenVector),axis=1,keepdims=True)
+        softmaxDerivative = self.calcDrvForSoftMax(hiddenVector)
+        hiddenVector = self.doSoftmax(hiddenVector)
         previousOutputsV = previousOutputsVectors @ WV
         hiddenVector = hiddenVector @ previousOutputsV
         return previousOutputsVectors, hiddenVector
+    
+    def doSoftmax(self,hiddenVector):
+        hiddenVector = hiddenVector - np.max(hiddenVector,axis=1,keepdims=True)
+        hiddenVector = np.power(np.e,hiddenVector) / np.sum(np.power(np.e,hiddenVector),axis=1,keepdims=True)
+        return hiddenVector
     
     def doMultiHeadAttention(self,previousOutputsList,tokenListIDDict):
         hiddenVector = np.zeros((self.__numberHeads),dtype=object)
@@ -83,7 +94,7 @@ class model:
     def doOutputProjection(self,hiddenVector):
         return hiddenVector @ self.__WO
     
-    def doLayerNorm(self, hiddenVector, previousOutput):
+    def doResidualAndLayerNorm(self, hiddenVector, previousOutput):
         hiddenVector = hiddenVector + previousOutput
         epsilon = 10**(-5)
         mean = np.mean(hiddenVector,axis=1,keepdims=True)
@@ -95,7 +106,7 @@ class model:
     def doFeedForwardNetwork(self,hiddenVector):
         hiddenVector = (hiddenVector @ self.__WZ1) + self.__learnedBias1FFN
         hiddenVector = np.maximum(0,hiddenVector)
-        # hiddenVector = (hiddenVector @ self.__WZ2) + self.__learnedBias2FFN
+        hiddenVector = (hiddenVector @ self.__WZ2) + self.__learnedBias2FFN
         return hiddenVector
     
     def positional_encoding(self, sequence_length, dk):
@@ -108,7 +119,51 @@ class model:
         PE[:,1::2] = np.cos(angle)
         return PE
     
+    def calcDrvForMatrixMultL(self,leftMatrix,rightMatrix):
+        derivative = np.array([rightMatrix])
+        forBroadcastingDerivative = np.ones((
+            len(leftMatrix),
+            rightMatrix.shape[0],
+            rightMatrix.shape[1]
+        ))
+        return derivative*forBroadcastingDerivative
 
+    def calcDrvForMatrixMultR(self,leftMatrix,rightMatrix):
+        derivative = np.array(leftMatrix.T[:,np.newaxis])
+        forBroadcastingDerivative = np.ones((
+            leftMatrix.shape[1], 
+            rightMatrix.shape[1], 
+            leftMatrix.shape[0]
+        ))
+        return derivative*forBroadcastingDerivative
+
+    def calcDrvForSoftMax(self,hiddenVector):
+        hiddenVector = hiddenVector - np.max(hiddenVector,axis=1,keepdims=True)
+        powerOfE = np.power(np.e,hiddenVector)
+        summation = np.sum(powerOfE,axis=1,keepdims=True)
+        derivative = np.zeros((len(hiddenVector)*len(hiddenVector),len(hiddenVector)))
+        for i in range(len(hiddenVector)):
+            rowStart = i*len(hiddenVector)
+            rowEnd = (i+1)*len(hiddenVector)
+            derivative[rowStart:rowEnd,i] = 1
+            derivative[rowStart:rowEnd] = (
+                (
+                    (derivative[rowStart:rowEnd])*((np.exp(hiddenVector[:,i:i+1]))/
+                    (np.sum(np.exp(hiddenVector),axis=1,keepdims=True)))
+                ) -
+                (
+                    (
+                        np.exp(hiddenVector)/
+                        np.sum(np.exp(hiddenVector),axis=1,keepdims=True)
+                    ) *
+                    (
+                        (np.exp(hiddenVector[:,i:i+1]))/
+                        (np.sum(np.exp(hiddenVector),axis=1,keepdims=True))
+                    )
+                )            
+            )
+        return derivative
+    
     def getEin(self):
         return self.__Ein
     
@@ -141,7 +196,7 @@ class model:
 # arr = np.array([[6,7],[8,9],[10,11]])
 # newarr = np.array([0,1,2])
 
-arr = np.array([[6,7],[8,9]])
+arr = np.array([[6,7],[8,9],[4,5]])
 newarr = np.array([[0,1],[2,3],[4,5]])
 
 # newarr = np.array([5,6,7,8])
@@ -150,64 +205,86 @@ newarr = np.array([[0,1],[2,3],[4,5]])
 # newarr = np.array([5])
 # arr = np.array([1,2,3,4])
 
-# print(np.mean(arr,axis=1,keepdims=True))
-
-# [
-# [[0,2,4],[0,2,4]]
-# [[1,3,5],[1,3,5]] 
-# ]
-
-# [
-# [[0,2,4]],
-# [[1,3,5]] 
-# ]
-
-# shape1 = leftMatrix.shape[1]
-# lenMatrix = len(rightMatrix)
-# shape0 = leftMatrix.shape[0]
-
-# [0,1,2]
-
-# [
-#     [0,0],
-#     [1,1],
-#     [2,2]
-# ]
-
-# len(leftMatrix),rightMatrix.shape[1]
-
 # arr = np.array([arr])
 # print(newarr*arr)
 
 # def calcDrvForMatrixMultL(leftMatrix,rightMatrix):
 #     derivative = np.array([rightMatrix])
-#     if leftMatrix.ndim == 1:
-#         return derivative
-#     elif leftMatrix.ndim > 2:
-#         print("Error, only works for left being 1 or 2 dimensional array")
-#         return
-
-#     forBroadcastingDerivative = np.ones((len(leftMatrix),
-#                 rightMatrix.shape[0],rightMatrix.shape[1]))
+#     forBroadcastingDerivative = np.ones((
+#         len(leftMatrix),
+#         rightMatrix.shape[0],
+#         rightMatrix.shape[1]
+#     ))
 #     return derivative*forBroadcastingDerivative
 
 # def calcDrvForMatrixMultR(leftMatrix,rightMatrix):
 #     derivative = np.array(leftMatrix.T[:,np.newaxis])
-#     if (
-#         leftMatrix.ndim == 1 and 
-#         derivative.shape[0] == len(rightMatrix)
-#     ):
-#         forBroadcastingDerivative = np.ones((len(leftMatrix),rightMatrix.shape[1]))
-        
-#     elif leftMatrix.ndim > 2:
-#         print("Error, only works for left being 1 or 2 dimensional array")
-#         return
-#     else:
-#         forBroadcastingDerivative = np.ones((leftMatrix.shape[1],
-#                             rightMatrix.shape[1], leftMatrix.shape[0]))
+#     forBroadcastingDerivative = np.ones((
+#         leftMatrix.shape[1], 
+#         rightMatrix.shape[1], 
+#         leftMatrix.shape[0]
+#     ))
 #     return derivative*forBroadcastingDerivative
 
-# print(calcDrvForMatrixMultL(newarr,arr[:,np.newaxis]))
-# print(calcDrvForMatrixMultR(newarr,arr[:,np.newaxis]))
+
+# Don't delete this is important. 
+# Basically left@right.T is equal to
+# (right@left.T).T
+# print(arr.T)
+# print(newarr)
+# print(calcDrvForMatrixMultR(newarr,arr.T))
+# print()
+# print(arr)
+# print(newarr.T)
+# print(calcDrvForMatrixMultL(arr,newarr.T))
+#END-----------------
+
+
+# hiddenVector = np.array([
+#     [1,2,3,4,5,6],
+#     [7,8,9,10,11,12],
+#     [13,14,15,16,17,18],
+#     [19,20,21,22,23,24],
+#     [25,26,27,28,29,30],
+#     [31,32,33,34,35,36]
+# ])
+# derivative = np.zeros((len(hiddenVector)*len(hiddenVector),len(hiddenVector)))
+
+
+
+
+# def calcDrvForSoftMax(hiddenVector):
+#     hiddenVector = hiddenVector - np.max(hiddenVector,axis=1,keepdims=True)
+#     powerOfE = np.power(np.e,hiddenVector)
+#     summation = np.sum(powerOfE,axis=1,keepdims=True)
+#     derivative = np.zeros((len(hiddenVector)*len(hiddenVector),len(hiddenVector)))
+#     for i in range(len(hiddenVector)):
+#         rowStart = i*len(hiddenVector)
+#         rowEnd = (i+1)*len(hiddenVector)
+#         derivative[rowStart:rowEnd,i] = 1
+#         derivative[rowStart:rowEnd] = (
+#             (
+#                 (derivative[rowStart:rowEnd])*((np.exp(hiddenVector[:,i:i+1]))/
+#                 (np.sum(np.exp(hiddenVector),axis=1,keepdims=True)))
+#             ) -
+#             (
+#                 (
+#                     np.exp(hiddenVector)/
+#                     np.sum(np.exp(hiddenVector),axis=1,keepdims=True)
+#                 ) *
+#                 (
+#                     (np.exp(hiddenVector[:,i:i+1]))/
+#                     (np.sum(np.exp(hiddenVector),axis=1,keepdims=True))
+#                 )
+#             )            
+#         )
+#     return derivative
+
+# print(calcDrvForSoftMax(hiddenVector))
+
+# newvector = ((np.exp(hiddenVector)/(np.sum(np.exp(hiddenVector),axis=1,keepdims=True)))*
+#              (1-(np.exp(hiddenVector)/np.sum(np.exp(hiddenVector),axis=1,keepdims=True))))
+
+# print(newvector)
 
 # print(newarr[:,np.newaxis])

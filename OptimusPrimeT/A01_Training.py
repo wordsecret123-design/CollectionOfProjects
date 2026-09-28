@@ -15,7 +15,7 @@ import numpy as np
 
 tokens = tokenizer("00_DataSet2.txt")
 modelA = md.model(VocabSize=tokens.GetVocabSize(),widthOfEmbeddingMatrix=16,NumberHeads=4)
-
+modelA.trainModel(forwardPassedData=tokens.GetContentList(),tokenListIDDict=tokens.GetVocabDict())
 
 # previousOutputsVectors = modelA.trainModel(
 #     forwardPassedData=tokens.GetContentList(),
@@ -32,7 +32,7 @@ modelA = md.model(VocabSize=tokens.GetVocabSize(),widthOfEmbeddingMatrix=16,Numb
 # print("here")
 # print(previousOutputsVectors)
 
-# modelA.trainModel(forwardPassedData=tokens.GetContentList(),tokenListIDDict=tokens.GetVocabDict())
+
 # print(modelA.getEin()[0])
 # array1 = [x for i in range(tokens.GetVocabSize()) for obj in modelA.getEmbeddingHead() for x in obj[i].tolist()]
 # array2 = [obj for i in range(tokens.GetVocabSize()) for obj in modelA.getEin()[i].tolist()]
